@@ -3,8 +3,12 @@ from pymongo import MongoClient
 from datetime import datetime
 from user_agents import parse
 import json
-
+import requests
 app=Flask(__name__)
+from flask import Blueprint
+
+app_sub = Blueprint('sub_blueprint', __name__, url_prefix='/sub')
+
 
 client=MongoClient('mongodb://localhost:27017/')
 db=client['shortly']
@@ -18,10 +22,14 @@ def get_info_and_redirect(short):
     #Getting the data of a click
     now=datetime.utcnow()
     user_agent=parse(request.user_agent.string)
-    if request.headers.get('X-Forwarded-For'):
-        ip_address = request.headers.get('X-Forwarded-For').split(',')[0]#first ip in the list
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    url=f"http://ip-api.com/json/{ip_address}"
+    response=requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        
     else:
-        ip_address = request.remote_addr
+        return {"error": "Failed to get geolocation"}
     click_data = {
         "time": now.strftime("%H:%M:%S"),
         "date": now.day,
@@ -31,23 +39,29 @@ def get_info_and_redirect(short):
         "device": user_agent.device.family,
         "os": user_agent.os.family,
         "browser": user_agent.browser.family,
-        "ip": ip_address
-    }
+        "ip": ip_address,
+        "city": data.get("city"),
+        "region": data.get("region"),
+        "country": data.get("country_name"),
+        "latitude": data.get("latitude"),
+        "longitude": data.get("longitude"),
+        "org": data.get("org")}
+    
     #Getting unique visitors
-    ip_list = [click["ip"] for click in url.get("clicks",[])]
-    if ip_address not in ip_list:
-        collection.update_one(
-            {"shortCode": short},
-            {"$inc": {"unique_visitors": 1}},
-            upsert=True 
-        ) 
+   
     #Updating MongoDB
+    
+    
+
     collection.update_one(
         {"shortCode": short},
-        {"$push": {"clicks": click_data}}  
+        {"$push": {"click_data": click_data}}
     )
+    #originalurl
+    ourl=collection.find_one({"shortCode":short})
+
     
-    return redirect(url['original_url'])
+    return redirect(ourl['longUrl'])
 
 #Getting impressions for ctr
 @app.route('/impression/<short>')

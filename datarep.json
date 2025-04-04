@@ -2,7 +2,8 @@
     "shortCode":null,
     "unique_visitors":0,
     "impressions":0,
-    "clicks":[],
+    "clicks":0,
+    "click_data": [],
     "longUrl":"",
     "createdAt":"",
     "expiryAt":null
