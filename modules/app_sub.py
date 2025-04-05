@@ -41,10 +41,10 @@ def get_info_and_redirect(short):
         "browser": user_agent.browser.family,
         "ip": ip_address,
         "city": data.get("city"),
-        "region": data.get("region"),
-        "country": data.get("country_name"),
-        "latitude": data.get("latitude"),
-        "longitude": data.get("longitude"),
+        "region": data.get("regionName"),
+        "country": data.get("country"),
+        "latitude": data.get("lat"),
+        "longitude": data.get("lon"),
         "org": data.get("org")}
     
     #Getting unique visitors
