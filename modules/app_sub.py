@@ -7,14 +7,14 @@ import requests
 app=Flask(__name__)
 from flask import Blueprint
 
-app_sub = Blueprint('sub_blueprint', __name__, url_prefix='/sub')
+app_sub = Blueprint('app_sub',__name__, url_prefix='/sub')
 
 
 client=MongoClient('mongodb://localhost:27017/')
 db=client['shortly']
 collection=db['urls']
 
-@app.route('/<short>')
+@app_sub.route('/<short>')
 def get_info_and_redirect(short):
     url=collection.find_one({'shortCode':short})
     if not url:
@@ -64,7 +64,7 @@ def get_info_and_redirect(short):
     return redirect(ourl['longUrl'])
 
 #Getting impressions for ctr
-@app.route('/impression/<short>')
+@app_sub.route('/impression/<short>')
 def count_impression(short):
     collection.update_one(
         {"shortCode": short},
@@ -74,7 +74,7 @@ def count_impression(short):
     return "Impression counted", 200
 
 #Diplaying ctr
-@app.route('/ctr/<short>')
+@app_sub.route('/ctr/<short>')
 def getctr(short):
     url=collection.find_one({'shortCode':short})
     if not url:
@@ -91,7 +91,7 @@ def getctr(short):
     return pretty_json
 
 #Displaying analytics
-@app.route('/analytics/<short>')
+@app_sub.route('/analytics/<short>')
 def get_analytics(short):
     url=collection.find_one({'shortCode':short})
     if not url:

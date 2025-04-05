@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import random
 import string
 from flask import Blueprint
-app_APK = Blueprint('app_APK', __name__, url_prefix='/apk')
+app_APK = Blueprint('app_APK',__name__,url_prefix='/apk')
 
 app = Flask(__name__)
 
@@ -21,7 +21,7 @@ def generate_short_code():
     """Generate a random 6-character alphanumeric short code."""
     return ''.join(random.choices(string.ascii_letters + string.digits, k=6))
 
-@app.route('/bulk-shorten', methods=['POST'])
+@app_APK.route('/bulk-shorten', methods=['POST'])
 def bulk_shorten():
     """Bulk shorten URLs."""
     data = request.json

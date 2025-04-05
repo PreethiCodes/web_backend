@@ -3,7 +3,7 @@ from pymongo import MongoClient
 from datetime import datetime
 
 # Initialize Blueprint
-app_admin = Blueprint('app_admin', __name__)
+app_admin = Blueprint('app_admin',__name__, url_prefix="/admin")
 
 # Configure MongoDB
 client = MongoClient('mongodb://localhost:27017/')
