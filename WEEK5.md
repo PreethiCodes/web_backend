@@ -14,7 +14,7 @@
 </details>
 
 - [X] Everyone `url_prefix`s like @PreethiCodes @ `./modules/app_admin.py:19`
-- [ ] `modules/app_shorten.py:62` and `modules/app_analytics.py:25` both does 1 thing similar - returing full url given shortcode. I insist that only `modules/app_shorten.py:62` returns URL and calls `modules/app_analytics.py:25` itself. 
+- [X] `modules/app_shorten.py:62` and `modules/app_analytics.py:25` both does 1 thing similar - returing full url given shortcode. I insist that only `modules/app_shorten.py:62` returns URL and calls `modules/app_analytics.py:25` itself. 
 <details>
   <summary>Hint</summary>
 
@@ -25,7 +25,7 @@
 
 - [X] `./modules/app_analytics.py` has following changes - CH1, CH2, CH3
 - [ ] `./modules/app_bs.py` has following changes - CH4
-- [ ] `./modules/app_shorten.py` has following changes - CH5, CH6, CH7
+- [X] `./modules/app_shorten.py` has following changes - CH5, CH6, CH7
 
 > [!NOTE]
 > All CH identifiers are included in comments on the relevant lines describing the required changes.
