@@ -13,7 +13,7 @@ collection = db['urls']
 
 class ShortenModule:
     def __init__(self):
-        self.bp = Blueprint('shorten', __name__, url_prefix='')
+        self.bp = Blueprint('shorten', __name__, url_prefix='/shorten')
         self.register_routes()
     def register_routes(self):
         # Generate a short code 
@@ -45,7 +45,8 @@ class ShortenModule:
                 "longUrl": long_url,
                 "createdAt":created_at ,
                 "expiryDate": expiry_date,
-                "clicks": 0
+                "clicks": 0,
+                "impressions": 0
             }
 
             collection.insert_one(record)
@@ -60,23 +61,19 @@ class ShortenModule:
 
         @self.bp.route('/expand/<string:short_code>', methods=['GET'])
         def expand_url(short_code):
-            #! CH5 Has Error (TypeError and AttributeError)
-            #? CH6 does not increment clickcount or append click data to the record
-            record = collection.find_one({"shortCode": short_code})
-            if not record:
-                return jsonify({"error": "Short code does not exist"}), 404
-            
-            # Check expiry
-            if record['expiryDate'] < datetime.utcnow():
-                return jsonify({"error": "URL has expired"}), 410
-
+            result = collection.find_one({"shortCode": short_code})
+            if not result:
+                return jsonify({"error": "404 Not Found – Short code does not exist"}), 404
+            expiry_date = result.get("expiryDate")
+            if expiry_date and isoparse(expiry_date) < datetime.utcnow():
+                return jsonify({"error": "410 Gone – URL has expired"}), 410
             return jsonify({
-                "longUrl": record['longUrl'],
-                "shortCode": short_code,
-                "clicks": record['clicks'],
-                "createdAt": record['createdAt'].isoformat(),
-                "expiryDate": record['expiryDate'].isoformat()
-            }), 200
+                "longUrl": result["longUrl"],
+                "shortCode": result["shortCode"],
+                "clicks": result["clicks"],
+                "createdAt": result["createdAt"],
+                "expiryDate": result["expiryDate"]
+            })
 
         @self.bp.route('/<string:short_code>', methods=['GET'])
         def redirect_to_original_url(short_code):
@@ -84,10 +81,6 @@ class ShortenModule:
             record = collection.find_one({"shortCode": short_code})
             if not record:
                 return jsonify({"error": "Short code does not exist"}), 404
-            
-            # Update click count
-            collection.update_one({"shortCode": short_code}, {"$inc": {"clicks": 1}})
-            return redirect(record['longUrl'])
 
     def get_blueprint(self):
         return self.bp

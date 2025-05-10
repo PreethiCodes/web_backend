@@ -18,43 +18,13 @@ collection = db['urls']
 
 class AnalyticsModule:
     def __init__(self):
-        self.bp = Blueprint('analytics', __name__, url_prefix='')
+        self.bp = Blueprint('analytics', __name__, url_prefix='/analytics')
         self.register_routes()
     def register_routes(self):
         @self.bp.route('/<short>')
         def get_info_and_redirect(short):
             #location from ip address
             def get_location(ip):
-                #! CH1 Creates a new document for unique visitors, bad design choice considering that the shortcode should be the primary key
-            
-                '''
-                This is what I meant when I told to have a separate list of IP addresses to determine unique visitors.
-                {
-                    "_id": {
-                        "$oid": "681746a6c07042b607899c7d"
-                    },
-                    "shortCode": "psgtech",
-                    "longUrl": "https://www.psgtech.edu",
-                    "createdAt": "2025-05-04T10:51:18.879763",
-                    "expiryDate": "2025-08-02T10:51:18.879774",
-                    "clicks": 3,
-                    "unique_visitors": 1,
-                    #* "unique_visitors_list": [ "100.143.31.90", "100.143.30.63"], 
-                    "click_data": [
-                        {
-                        ...
-                        "ip": "100.143.31.90",
-                        ...
-                        },
-                        {
-                        ...
-                        "ip": "100.143.30.63",
-                        ...
-                        }
-                    ]
-                }
-                Now you dont have to visit all clicks and compile a ip address set, its already available under unique_visitors_list.
-                '''
                 url = f"http://ip-api.com/json/{ip}"
                 try:
                     response = requests.get(url, timeout=5)  # Add a timeout
@@ -74,9 +44,33 @@ class AnalyticsModule:
             url=collection.find_one({'shortCode':short})
             if not url:
                 return "URL not found",404
+            
+
+            #getting impression whenever unfurled
+            UNFURL_BOTS = ['facebookexternalhit','Twitterbot','Slackbot-LinkExpanding','Discordbot','WhatsApp','LinkedInBot']
+            user_agent = request.headers.get('User-Agent', '')
+            if any(bot in user_agent for bot in UNFURL_BOTS):
+                result= collection.update_one(
+                    {"shortCode": short},
+                    {"$inc": {"impressions": 1}},
+                    upsert=False
+                )
+
+                # Return simple HTML response
+                return f"""
+                <html>
+                <head>
+                    <title>{short} is unfurled</title>
+                </head>
+                <body>
+                    <h1>shortcode for this url: </h1>
+                </body>
+                </html>
+                """
     
             #Getting the data of a click
             now=datetime.utcnow()
+            iso=now.isoformat()
             user_agent=parse(request.user_agent.string)
             if request.headers.get('X-Forwarded-For'):
                 ip_address = request.headers.get('X-Forwarded-For').split(',')[0]#first ip in the list
@@ -84,12 +78,8 @@ class AnalyticsModule:
                 ip_address = request.remote_addr
     
             location_data = get_location(ip_address)
-            #TODO CH2 include datetime in ISO format
             click_data = {
-                "time": now.strftime("%H:%M:%S"),
-                "date": now.day,
-                "month": now.strftime("%B"),
-                "year": now.year,
+                "date_time": iso,
                 "day": now.strftime("%A"),
                 "device": user_agent.device.family,
                 "os": user_agent.os.family,
@@ -99,19 +89,25 @@ class AnalyticsModule:
                 "region": location_data["region"],
                 "city": location_data["city"]
             }
-            #Getting unique visitors
+            #unique visitors
             collection.update_one(
-                {"shortCode": short, "click_data.ip": {"$ne": ip_address}},  #Checking if IP does not already exist
-                {"$inc": {"unique_visitors": 1}}, 
-                upsert=True
+                {
+                    "shortCode": short,
+                    "unique_visitors_list": {"$ne": ip_address}
+                },
+                {
+                    "$addToSet": {"unique_visitors_list": ip_address},
+                    "$inc": {"unique_visitors": 1}
+                }
                 )
 
-            #Updating MongoDB
+            #adding click data
             collection.update_one(
                 {"shortCode": short},
                 {"$push": {"click_data": click_data}}
             )
 
+            #incrementing clicks
             collection.update_one(
                 {"shortCode": short},
                 {"$inc": {"clicks": 1}}
@@ -119,17 +115,6 @@ class AnalyticsModule:
     
             return url['longUrl']
         
-        #Getting impressions for ctr
-        @self.bp.route('/impression/<short>')
-        def count_impression(short):
-            #! CH3 Find out what impressions actually mean. You'll scrap this route once you know what it means.
-            # Hint: Its something to do with what the link does on Whatsapp, Discord, Slack, etc.
-            collection.update_one(
-                {"shortCode": short},
-                {"$inc": {"impressions": 1}}, 
-                upsert=True 
-            )
-            return "Impression counted", 200
         #Displaying ctr
         @self.bp.route('/ctr/<short>')
         def getctr(short):

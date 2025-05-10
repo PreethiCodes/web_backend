@@ -12,6 +12,25 @@ class MainApp:
         self.register_modules()
         self.register_routes()
 
+    def _mongo_connection(self):
+        try:
+
+            mongo_uri=os.getenv("MONGO_URI", "mongodb+srv://apk:T1GavQISQkGmIShw@cluster0.dpdv9hr.mongodb.net/")
+                client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+                client.admin.command('ping')   
+                print("MongoDB Connection Successful")
+                return client
+        except errors.ServerSelectionTimeoutError as err:
+            print("MongoDB connection timeout.")
+            print(f"Details: {err}")
+        except errors.OperationFailure as err:
+            print("MongoDB authentication failed.")
+            print(f"Details: {err}")
+        except Exception as err:
+            print("An unexpected MongoDB error occurred.")
+            print(f"Details: {err}")
+        return None
+
     def register_modules(self):
         self.app.register_blueprint(BSModule().get_blueprint())
         self.app.register_blueprint(AdminModule().get_blueprint())
