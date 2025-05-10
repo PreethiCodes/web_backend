@@ -24,8 +24,8 @@
 ### Module-wise Changes required:
 
 - [X] `./modules/app_analytics.py` has following changes - CH1, CH2, CH3
-- [ ] `./modules/app_bs.py` has following changes - CH4
-- [ ] `./modules/app_shorten.py` has following changes - CH5, CH6, CH7
+- [X] `./modules/app_bs.py` has following changes - CH4
+- [X] `./modules/app_shorten.py` has following changes - CH5, CH6, CH7
 
 > [!NOTE]
 > All CH identifiers are included in comments on the relevant lines describing the required changes.
