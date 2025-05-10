@@ -74,13 +74,6 @@ class ShortenModule:
                 "createdAt": result["createdAt"],
                 "expiryDate": result["expiryDate"]
             })
-
-        @self.bp.route('/<string:short_code>', methods=['GET'])
-        def redirect_to_original_url(short_code):
-            #* CH7 we wont need this, frontend will handle this
-            record = collection.find_one({"shortCode": short_code})
-            if not record:
-                return jsonify({"error": "Short code does not exist"}), 404
-
+            
     def get_blueprint(self):
         return self.bp
