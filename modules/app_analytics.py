@@ -113,7 +113,7 @@ class AnalyticsModule:
                 {"$inc": {"clicks": 1}}
             )
     
-            return url['longUrl']
+            return redirect(url['longUrl'])
         
         #Displaying ctr
         @self.bp.route('/ctr/<short>')

@@ -5,6 +5,8 @@ from modules.app_bs import BSModule
 from modules.app_admin import AdminModule
 from modules.app_analytics import AnalyticsModule
 from modules.app_shorten import ShortenModule
+from pymongo import MongoClient, errors
+import os
 
 class MainApp:
     def __init__(self):
@@ -16,10 +18,10 @@ class MainApp:
         try:
 
             mongo_uri=os.getenv("MONGO_URI", "mongodb+srv://apk:T1GavQISQkGmIShw@cluster0.dpdv9hr.mongodb.net/")
-                client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
-                client.admin.command('ping')   
-                print("MongoDB Connection Successful")
-                return client
+            client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
+            client.admin.command('ping')   
+            print("MongoDB Connection Successful")
+            return client
         except errors.ServerSelectionTimeoutError as err:
             print("MongoDB connection timeout.")
             print(f"Details: {err}")
