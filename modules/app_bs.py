@@ -6,6 +6,7 @@ import string
 from dotenv import load_dotenv
 import os
 from modules.db import db
+import pymongo.errors
 
 collection = db['urls']
 
@@ -13,9 +14,19 @@ class BSModule:
     def __init__(self):
         self.bp = Blueprint('bs', __name__, url_prefix='/bs')
         self.register_routes()
+
+    def generate_short_code(self):
+        """Generate a random 6-character alphanumeric short code."""
+        while True:
+                code=''.join(random.choices(string.ascii_letters + string.digits, k=6))
+                if not collection.find_one({"shortCode": code}):
+                    return code
+
     def register_routes(self):
         """Register routes for the bulk shorten module."""
         @self.bp.route('/bulk-shorten', methods=['POST'])
+
+        
         
         def bulk_shorten():
             #TODO CH4 change the base_url, frontend team should provide this once they decide
@@ -23,9 +34,7 @@ class BSModule:
             url_mapping = {}
             base_url="https://short.ly/"
 
-            def generate_short_code():
-                """Generate a random 6-character alphanumeric short code."""
-                return ''.join(random.choices(string.ascii_letters + string.digits, k=6))
+            
 
             """Bulk shorten URLs."""
             data = request.json
@@ -44,9 +53,9 @@ class BSModule:
                 if url in url_mapping:
                     short_code = url_mapping[url]
                 else:
-                    short_code = generate_short_code()
-                    while short_code in url_mapping.values():  # Ensure unique short codes
-                        short_code = generate_short_code()
+                    short_code = self.generate_short_code()
+
+                    
                     url_mapping[url] = short_code
                     url_mapping[short_code] = url  # Reverse mapping for retrieval
 
@@ -57,7 +66,13 @@ class BSModule:
                         "createdAt":created_at ,
                         "expiryDate": expiry_date,
                         "clicks": 0}
-                    collection.insert_one(record)
+                    try:    
+                        collection.insert_one(record)
+                    except pymongo.errors.DuplicateKeyError:
+                        # If duplicate key error, generate a new short code and insert again
+                        short_code = self.generate_short_code()
+                        record["shortCode"] = short_code
+                        collection.insert_one(record)    
 
                 shortened_urls.append({
                     'longUrl': url,
