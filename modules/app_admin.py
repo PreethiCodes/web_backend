@@ -1,4 +1,5 @@
-from flask import Blueprint, request
+from flask import Blueprint, request,jsonify
+from bson.objectid import ObjectId
 from pymongo import MongoClient
 from datetime import datetime
 import os
@@ -105,6 +106,48 @@ class AdminModule:
 
             except Exception as e:
                 return f'Internal server error: {e}', 500
+        @self.bp.route('/recent',methods=['POST'])
+        def recent():
+            data=request.json
+            userid=data.get("userid")
+            userid=ObjectId(str(userid))
+
+# Find the most recently created record using _id
+            url = collection.find_one({"userid":userid},sort=[("_id", -1)]) # Sort by _id in descending order
+
+            if not url:
+                return jsonify({"error": "No records found"}), 404
+
+# Format the response
+            recent_url = {
+"shortCode": url["shortCode"],
+"longUrl": url["longUrl"],
+"createdAt": url["createdAt"],
+"expiryDate": url["expiryDate"],
+"clicks": url["clicks"],
+"base64img":url.get("base64img","")
+            }
+
+            return jsonify(recent_url), 200
+        @self.bp.route('/all',methods=['POST'])
+        def all():
+            data=request.json
+            userid=data.get("userid")
+            userid=ObjectId(str(userid))
+
+            urls = collection.find({"userid": userid})
+            all_urls = []
+            for url in urls:
+                all_urls.append({
+                    "shortCode": url.get("shortCode", ""),
+                    "longUrl": url.get("longUrl", ""),
+                    "createdAt": url.get("createdAt", ""),
+                    "expiryDate": url.get("expiryDate", ""),
+                    "clicks": url.get("clicks", 0)
+                })
+            return jsonify(all_urls), 200
+
+        
 
     def get_blueprint(self):
         return self.bp

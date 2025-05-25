@@ -7,6 +7,7 @@ import requests
 from collections import Counter
 import os
 from dotenv import load_dotenv
+from bson.objectid import ObjectId
 from modules.db import db
 
 collection = db['urls']
@@ -128,6 +129,7 @@ class AnalyticsModule:
         #Displaying ctr
         @self.bp.route('/ctr/<short>')
         def getctr(short):
+            print(short)
             url=collection.find_one({'shortCode':short})
             if not url:
                 return "short code not found"
@@ -156,39 +158,6 @@ class AnalyticsModule:
 
             display={"shortCode": short, "totalClicks": clicks, "uniqueVisitors": url.get('unique_visitors',0), "deviceDistribution": device, "osDistribution": os, "browserDistribution": browser}
             return jsonify(display)
-        @self.bp.route('/recent')
-        def recent():
-# Find the most recently created record using _id
-            url = collection.find_one(sort=[("_id", -1)]) # Sort by _id in descending order
-
-            if not url:
-                return jsonify({"error": "No records found"}), 404
-
-# Format the response
-            recent_url = {
-"shortCode": url["shortCode"],
-"longUrl": url["longUrl"],
-"createdAt": url["createdAt"],
-"expiryDate": url["expiryDate"],
-"clicks": url["clicks"],
-"base64img":url["base64img"]
-            }
-
-            return jsonify(recent_url), 200
-        @self.bp.route('/all')
-        def all():
-            urls = collection.find()
-            all_urls = []
-            for url in urls:
-                all_urls.append({
-                    "shortCode": url.get("shortCode", ""),
-                    "longUrl": url.get("longUrl", ""),
-                    "createdAt": url.get("createdAt", ""),
-                    "expiryDate": url.get("expiryDate", ""),
-                    "clicks": url.get("clicks", 0)
-                })
-            return jsonify(all_urls), 200
-
         
     def get_blueprint(self):
         return self.bp
