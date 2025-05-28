@@ -1,5 +1,3 @@
-
-
 from flask import Flask, redirect
 from modules.app_bs import BSModule
 from modules.app_admin import AdminModule
@@ -10,27 +8,23 @@ from pymongo import MongoClient, errors
 from flask_cors import CORS
 
 
-
-
 class MainApp:
     def __init__(self):
         self.app = Flask(__name__)
-        CORS(self.app,origins=["http://localhost:5173"])
+        CORS(self.app, origins=["http://localhost:5173"])
         self.register_modules()
         self.register_routes()
         self._mongo_connection()
-        
-       
 
     def _mongo_connection(self):
         try:
 
-            mongo_uri=os.getenv("MONGO_URI")
+            mongo_uri = os.getenv("MONGO_URI")
             print(mongo_uri)
             client = MongoClient(mongo_uri, serverSelectionTimeoutMS=5000)
-            client.admin.command('ping')   
-            db = client['shortly']
-            self.collection = db['urls']
+            client.admin.command("ping")
+            db = client["shortly"]
+            self.collection = db["urls"]
             print("MongoDB Connection Successful")
             return client
         except errors.ServerSelectionTimeoutError as err:
@@ -54,26 +48,25 @@ class MainApp:
         @self.app.route("/")
         def home():
             return "Welcome to the Main App!"
+
         @self.app.route("/<short>")
         def redirect_to_long_url(short):
-            url = self.collection.find_one({'shortCode': short})
+            url = self.collection.find_one({"shortCode": short})
             if not url:
                 return "URL not found", 404
             else:
-                long_url = url['longUrl']
+                long_url = url["longUrl"]
                 # Increment clicks
                 self.collection.update_one(
-                    {"shortCode": short},
-                    {"$inc": {"clicks": 1}},
-                    upsert=False
+                    {"shortCode": short}, {"$inc": {"clicks": 1}}, upsert=False
                 )
                 return redirect(long_url)
-        
+
     def get_app(self):
         return self.app
-    
+
 
 # This code initializes a Flask application and registers multiple modules (blueprints) to it.
 # Each module is defined in its own file within the `modules` directory.
 # The `MainApp` class encapsulates the application setup, including the registration of blueprints.
-# The `get_app` method returns the Flask application instance.    
+# The `get_app` method returns the Flask application instance.

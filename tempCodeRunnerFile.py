@@ -9,4 +9,4 @@ if __name__ == "__main__":
     main_app = MainApp()
     app = main_app.get_app()
     port = int(os.getenv("PORT", 5000))
-    app.run(debug=True)    
+    app.run(debug=True)
